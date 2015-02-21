@@ -25,12 +25,18 @@ var queryObj = new mssql_wrapper.Query({
 	password: 'mypassword',
 	database: 'mydatabase'
 });
+
+/* set table name to operate */
 queryObj.table('dbo.mytable')
-.data({
+
+/* set required to be inserted */
+queryObj.data({
 	'title': 'My Test Insert',
 	'description': 'My test insert description'
 })
-.insert(function(results) {
+
+/* run insert query and fetch response */
+queryObj.insert(function(results) {
 	console.log(results);
 	process.exit();
 }, function(err, sql) {
