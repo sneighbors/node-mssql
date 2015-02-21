@@ -16,7 +16,7 @@ The plugin will allow following operations as follows:
 
 <h6>Insert Operation:</h6>
 ```
-var mssql_wrapper = require('../wrapper');
+var mssql_wrapper = require('node-mssql-wrapper');
 
 var queryObj = new mssql_wrapper.Query({
 	host: 'x.x.x.x',
@@ -43,7 +43,7 @@ queryObj.table('dbo.mytable')
 
 <h6>Update Operation:</h6>
 ```
-var mssql_wrapper = require('../wrapper');
+var mssql_wrapper = require('node-mssql-wrapper');
 
 var queryObj = new mssql_wrapper.Query({
 	host: 'x.x.x.x',
