@@ -4,9 +4,6 @@ An easy-to-use MSSQL database connector for Node.js / io.js.
 
 There are some TDS modules which offer functionality to communicate with MSSQL databases but none of them does offer enough comfort - implementation takes a lot of lines of code. So I decided to create this module, that make work as easy as it could without losing any important functionality. node-mssql uses other TDS modules as drivers and offer easy to use unified interface. It also add extra features and bug fixes.
 
-There is also [co](https://github.com/visionmedia/co) wrapper available - [co-mssql](https://github.com/patriksimek/co-mssql).             
-If you're looking for session store for connect/express, visit [connect-mssql](https://github.com/patriksimek/connect-mssql).
-
 **Extra features:**
 - Unified interface for multiple MSSQL drivers
 - Connection pooling with Transactions and Prepared statements
@@ -14,6 +11,7 @@ If you're looking for session store for connect/express, visit [connect-mssql](h
 - Serialization of Geography and Geometry CLR types
 - Smart JS data type to SQL data type mapper
 - Support both Promises and standard callbacks
+- Query building API by parameters
 
 At the moment it support three TDS modules:
 - [Tedious](https://github.com/pekim/tedious) by Mike D Pilsbury (pure javascript - windows/osx/linux)
@@ -37,134 +35,82 @@ At the moment it support three TDS modules:
 
 ## Installation
 
-    npm install mssql
+    npm install node-mssql
 
 ## Quick Example
 
+<h6>Insert Operation:</h6>
 ```javascript
-var sql = require('mssql'); 
+var node_mssql = require('node-mssql');
 
-var config = {
-    user: '...',
-    password: '...',
-    server: 'localhost', // You can use 'localhost\\instance' to connect to named instance
-    database: '...',
-    
-    options: {
-        encrypt: true // Use this if you're on Windows Azure
-    }
-}
+/* add configuration to query object */
+var queryObj = new node_mssql.Query({
+    host: 'x.x.x.x',	 // You can use 'x.x.x.x\\instance' to connect to named instance
+    port: 1433,
+    username: 'myuser',
+    password: 'mypassword',
+    database: 'mydatabase'
+});
 
-var connection = new sql.Connection(config, function(err) {
-    // ... error checks
-    
-    // Query
-	
-    var request = new sql.Request(connection); // or: var request = connection.request();
-    request.query('select 1 as number', function(err, recordset) {
-        // ... error checks
-        
-        console.dir(recordset);
-    });
-	
-    // Stored Procedure
-	
-    var request = new sql.Request(connection);
-    request.input('input_parameter', sql.Int, 10);
-    request.output('output_parameter', sql.VarChar(50));
-    request.execute('procedure_name', function(err, recordsets, returnValue) {
-        // ... error checks
-        
-        console.dir(recordsets);
-    });
-	
+/* set table name to operate */
+queryObj.table('dbo.mytable')
+
+/* set required data to be inserted */
+queryObj.data({
+    'title': 'My Test Insert',
+    'description': 'My test insert description'
+})
+
+/* run insert query and fetch response */
+queryObj.insert(function(results) {
+    //  success callback
+    console.log(results);
+}, function(err, sql) {
+    //  failed callback
+    if(err)
+        console.log(err);
+
+    console.log(sql);
 });
 ```
 
-### Quick Example with one global connection
-
+<h6>Update Operation:</h6>
 ```javascript
-var sql = require('mssql'); 
+var node_mssql = require('node-mssql');
 
-var config = {
-    user: '...',
-    password: '...',
-    server: 'localhost', // You can use 'localhost\\instance' to connect to named instance
-    database: '...',
-    
-    options: {
-        encrypt: true // Use this if you're on Windows Azure
-    }
-}
-
-sql.connect(config, function(err) {
-    // ... error checks
-	
-    // Query
-	
-    var request = new sql.Request();
-    request.query('select 1 as number', function(err, recordset) {
-        // ... error checks
-
-        console.dir(recordset);
-    });
-	
-    // Stored Procedure
-	
-    var request = new sql.Request();
-    request.input('input_parameter', sql.Int, value);
-    request.output('output_parameter', sql.VarChar(50));
-    request.execute('procedure_name', function(err, recordsets, returnValue) {
-        // ... error checks
-
-        console.dir(recordsets);
-    });
-	
+/* add configuration to query object */
+var queryObj = new node_mssql.Query({
+    host: 'x.x.x.x',	 // You can use 'x.x.x.x\\instance' to connect to named instance
+    port: 1433,
+    username: 'myuser',
+    password: 'mypassword',
+    database: 'mydatabase'
 });
-```
 
-<a name="streaming" />
-### Streaming example with one global connection
+/* set table name to operate */
+queryObj.table('dbo.mytable')
 
-If you plan to work with large amount of rows, you should always use streaming. Once you enable this, you must listen for events to receive data.
+/* set required data to be updated */
+queryObj.data({
+    'title': 'My Test Insert',
+    'description': 'My test insert description'
+})
 
-```javascript
-var sql = require('mssql'); 
+/* set update query condition */
+queryObj.where({
+	'title': 'My Test',
+})
 
-var config = {
-    user: '...',
-    password: '...',
-    server: 'localhost', // You can use 'localhost\\instance' to connect to named instance
-    database: '...',
-    stream: true, // You can enable streaming globally
-    
-    options: {
-        encrypt: true // Use this if you're on Windows Azure
-    }
-}
+/* run update query and fetch response */
+queryObj.update(function(results) {
+    //  success callback
+    console.log(results);
+}, function(err, sql) {
+    //  failed callback
+    if(err)
+        console.log(err);
 
-sql.connect(config, function(err) {
-    // ... error checks
-	
-    var request = new sql.Request();
-    request.stream = true; // You can set streaming differently for each request
-    request.query('select * from verylargetable'); // or request.execute(procedure);
-    
-    request.on('recordset', function(columns) {
-    	// Emitted once for each recordset in a query
-    });
-    
-    request.on('row', function(row) {
-    	// Emitted for each row in a recordset
-    });
-    
-    request.on('error', function(err) {
-    	// May be emitted multiple times
-    });
-    
-    request.on('done', function(returnValue) {
-    	// Always emitted as the last one
-    });
+    console.log(sql);
 });
 ```
 
@@ -1338,65 +1284,6 @@ request.query('select @myval as myval', function(err, recordset) {
 
 You can enable verbose mode by `request.verbose = true` command.
 
-```javascript
-var request = new sql.Request();
-request.verbose = true;
-request.input('username', 'patriksimek');
-request.input('password', 'dontuseplaintextpassword');
-request.input('attempts', 2);
-request.execute('my_stored_procedure');
-```
-
-Output for the example above could look similar to this.
-
-```
----------- sql execute --------
-     proc: my_stored_procedure
-    input: @username, varchar, patriksimek
-    input: @password, varchar, dontuseplaintextpassword
-    input: @attempts, bigint, 2
----------- response -----------
-{ id: 1,
-  username: 'patriksimek',
-  password: 'dontuseplaintextpassword',
-  email: null,
-  language: 'en',
-  attempts: 2 }
----------- --------------------
-   return: 0
- duration: 5ms
----------- completed ----------
-```
-
-<a name="issues" />
-## Known issues
-
-### Tedious
-
-- If you're facing problems with connecting SQL Server 2000, try setting the default TDS version to 7.1 with `config.options.tdsVersion = '7_1'` ([issue](https://github.com/patriksimek/node-mssql/issues/36))
-- If you're executing a statement longer than 4000 chars on SQL Server 2000, alway use [batch](#batch) instead of [query](#query) ([issue](https://github.com/patriksimek/node-mssql/issues/68))
-
-### msnodesql
-
-- There is a serious problem with errors during transactions - [reported here](https://github.com/patriksimek/node-mssql/issues/77).
-- msnodesql 0.2.1 contains bug in DateTimeOffset ([reported](https://github.com/WindowsAzure/node-sqlserver/issues/160))
-- msnodesql 0.2.1 doesn't support TVP data type.
-- msnodesql 0.2.1 doesn't support request timeout.
-- msnodesql 0.2.1 doesn't support request cancellation.
-
-### node-tds
-
-- If you're facing problems with date, try changing your tsql language `set language 'English';`.
-- node-tds 0.1.0 doesn't support connecting to named instances.
-- node-tds 0.1.0 contains bug and return same value for columns with same name.
-- node-tds 0.1.0 doesn't support codepage of input parameters.
-- node-tds 0.1.0 contains bug in selects that doesn't return any values *(select @param = 'value')*.
-- node-tds 0.1.0 doesn't support Binary, VarBinary and Image as parameters.
-- node-tds 0.1.0 always return date/time values in local time.
-- node-tds 0.1.0 has serious problems with MAX types.
-- node-tds 0.1.0 doesn't support TVP data type.
-- node-tds 0.1.0 doesn't support request timeout.
-
 <a name="license" />
 ## License
 
@@ -1409,87 +1296,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-
-node-mssql
-==========
-
-An easy-to-use MSSQL database wrapper for Node.js.
-
-<h4>Installation:</h4>
-```
-$ npm install node-mssql
-```
-
-<h4>Introduction</h4>
-mssql-wrapper(pre-release) provides wrapper on top of mssql native connection interface to provider better usubility for most common queries. 
-The plugin will allow following operations as follows:
-
-<h4>Examples:</h4>
-
-<h6>Insert Operation:</h6>
-```
-var mssql_wrapper = require('node-mssql-wrapper');
-
-/* add configuration to query object */
-var queryObj = new mssql_wrapper.Query({
-	host: 'x.x.x.x',
-	port: 1433,
-	username: 'myuser',
-	password: 'mypassword',
-	database: 'mydatabase'
-});
-
-/* set table name to operate */
-queryObj.table('dbo.mytable')
-
-/* set required to be inserted */
-queryObj.data({
-	'title': 'My Test Insert',
-	'description': 'My test insert description'
-})
-
-/* run insert query and fetch response */
-queryObj.insert(function(results) {
-	//	success callback
-	console.log(results);
-}, function(err, sql) {
-	//	failed callback
-	if(err)
-		console.log(err);
-	
-	console.log(sql);
-});
-```
-
-<h6>Update Operation:</h6>
-```
-var mssql_wrapper = require('node-mssql-wrapper');
-
-var queryObj = new mssql_wrapper.Query({
-	host: 'x.x.x.x',
-	port: 1433,
-	username: 'myuser',
-	password: 'mypassword',
-	database: 'mydatabase'
-});
-queryObj.table('dbo.mytable')
-.data({
-	'title': 'My Test Update',
-	'description': 'My test insert description'
-})
-.where({
-	'title': 'My Test',
-})
-.update(function(results) {
-	console.log(results);
-	process.exit();
-}, function(err, sql) {
-	if(err)
-		console.log(err);
-	
-	console.log(sql);
-});
-```
-
