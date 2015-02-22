@@ -1,11 +1,11 @@
-node-mssql-wrapper
-=================
+node-mssql
+==========
 
 An easy-to-use MSSQL database wrapper for Node.js.
 
 <h4>Installation:</h4>
 ```
-$ npm install mssql-wrapper
+$ npm install node-mssql
 ```
 
 <h4>Introduction</h4>
@@ -18,6 +18,7 @@ The plugin will allow following operations as follows:
 ```
 var mssql_wrapper = require('node-mssql-wrapper');
 
+/* add configuration to query object */
 var queryObj = new mssql_wrapper.Query({
 	host: 'x.x.x.x',
 	port: 1433,
@@ -37,9 +38,10 @@ queryObj.data({
 
 /* run insert query and fetch response */
 queryObj.insert(function(results) {
+	//	success callback
 	console.log(results);
-	process.exit();
 }, function(err, sql) {
+	//	failed callback
 	if(err)
 		console.log(err);
 	
