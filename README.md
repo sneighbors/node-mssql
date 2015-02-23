@@ -126,12 +126,6 @@ var queryObj = new node_mssql.Query({
 /* set table name to operate */
 queryObj.table('dbo.mytable');
 
-/* set required data to be updated */
-queryObj.data({
-    'title': 'My Test Insert',
-    'description': 'My test insert description'
-});
-
 /* set update query condition */
 queryObj.where({
 	'title': 'My Test',
