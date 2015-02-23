@@ -49,13 +49,13 @@ var queryObj = new node_mssql.Query({
 });
 
 /* set table name to operate */
-queryObj.table('dbo.mytable')
+queryObj.table('dbo.mytable');
 
 /* set required data to be inserted */
 queryObj.data({
     'title': 'My Test Insert',
     'description': 'My test insert description'
-})
+});
 
 /* run insert query and fetch response */
 queryObj.insert(function(results) {
@@ -84,13 +84,13 @@ var queryObj = new node_mssql.Query({
 });
 
 /* set table name to operate */
-queryObj.table('dbo.mytable')
+queryObj.table('dbo.mytable');
 
 /* set required data to be updated */
 queryObj.data({
     'title': 'My Test Insert',
     'description': 'My test insert description'
-})
+});
 
 /* set update query condition */
 queryObj.where({
@@ -99,6 +99,46 @@ queryObj.where({
 
 /* run update query and fetch response */
 queryObj.update(function(results) {
+    //  success callback
+    console.log(results);
+}, function(err, sql) {
+    //  failed callback
+    if(err)
+        console.log(err);
+
+    console.log(sql);
+});
+```
+
+<h6>Select Operation:</h6>
+```javascript
+var node_mssql = require('node-mssql');
+
+/* add configuration to query object */
+var queryObj = new node_mssql.Query({
+    host: 'x.x.x.x',	 // You can use 'x.x.x.x\\instance' to connect to named instance
+    port: 1433,
+    username: 'myuser',
+    password: 'mypassword',
+    database: 'mydatabase'
+});
+
+/* set table name to operate */
+queryObj.table('dbo.mytable');
+
+/* set required data to be updated */
+queryObj.data({
+    'title': 'My Test Insert',
+    'description': 'My test insert description'
+});
+
+/* set update query condition */
+queryObj.where({
+	'title': 'My Test',
+})
+
+/* run update query and fetch response */
+queryObj.select(function(results) {
     //  success callback
     console.log(results);
 }, function(err, sql) {
